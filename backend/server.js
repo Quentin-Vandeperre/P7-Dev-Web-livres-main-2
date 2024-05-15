@@ -1,7 +1,7 @@
-const http = require('http');
+const http = require('http');      // require sert à importer le package 
 const app = require('./app');
 
-const normalizePort = val => {
+const normalizePort = val => {          // cette fonction renvoie un numéro de port valide
   const port = parseInt(val, 10);
 
   if (isNaN(port)) {
@@ -12,10 +12,10 @@ const normalizePort = val => {
   }
   return false;
 };
-const port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
-const errorHandler = error => {
+const errorHandler = error => {         // cette fonction recherche les différentes erreurs et les gère
   if (error.syscall !== 'listen') {
     throw error;
   }
