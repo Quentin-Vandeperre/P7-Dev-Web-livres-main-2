@@ -37,45 +37,43 @@ exports.getOneBook = (req, res, next) => {
 };
 
 exports.rateBook = async (req, res, next) => {
-  try {
-    
+  const { id } = req.params;
+  const { userId, rating} = req.body;
 
-    // Rechercher le livre à noter
-    const book = await Book.findOne({_id: req.params.id});
-    const {  userId, rating } = req.body;                 // rating comme dans le front
-
-    for (i=0 ; i<book.ratings.length; i++){
-      if (book.ratings[i].userId == req.auth.userId) {
-        return res.status(400).json({ message : 'Vous avez déja noté ce livre'});
+  Book.findById(id)
+  .then(book => {
+      if (!book) {
+          return res.status(404).json({ error: 'Book not found' });
       }
-    }
-
-    book.ratings.push({
-      userId : userId, 
-      grade : rating,
-  });
-    console.log(book.ratings)
-
-    //Calcul moyenne du livre 
-    let somme = 0;
-
-    for (i=0 ; i<book.ratings.length; i++){
-      somme += book.ratings[i].grade
-    }
-
-    book.averageRating = parseInt(somme/book.ratings.length);
-
-    // Enregistrer les modifications dans la base de données
-    book.updateOne({ _id: req.params.id }, { ratings:book.ratings, averageRating:book.averageRating })  
-    .then(() => { res.status(201).json({ message: 'Note enregistré !' }) })
-    .catch(error => {console.log( { error }) })
-  //  .catch(error => res.status(401).json({ error }));
-  }
-   catch(error) {
-    // res.status(400).json({ error });
-      console.log( { error });
- };
-  
+      // On vérifie si l'utilisater a déjà mis une note
+      for (let i = 0; i < book.ratings.length; i++) {
+          if (book.ratings[i].userId === userId) {
+              return res.status(400).json({ message: 'L utilisateur a déjà noté ce livre' });
+          }
+      }
+      // On ajoute la note dans le tableau des notes du livre
+      book.ratings.push({
+          userId : userId, 
+          grade : rating
+      });
+      // On calcue la nouvelle moyenne de notes
+      let sum = 0;
+      for (let i = 0; i < book.ratings.length; i++) 
+      {
+          sum += book.ratings[i].grade;
+      }
+      averageRating = sum / book.ratings.length;
+      book.averageRating = parseInt(averageRating);
+      // On met à jour les notes et la moyenne du livre
+      return  Book.updateOne({ _id: req.params.id }, { ratings:book.ratings, averageRating:book.averageRating })
+  .then(data=> {
+      if(data){
+      res.status(201).json(book)
+      }
+  })
+  .catch(error => res.status(400).json({ error }))
+  })
+  .catch(error => res.status(400).json({ message:'il y a eu une erreur' }));
 };
 
 exports.createBook = (req, res, next) => {
@@ -101,39 +99,23 @@ exports.createBook = (req, res, next) => {
         // .catch(error => {console.log( { error }) })
 };
 
-  exports.modifyBook = async (req, res, next) => {
-    try {
-      
-      const { title, author, year, genre } = JSON.parse(req.body.book);
-      
-      const book = await Book.findOne({_id: req.params.id});
-      const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
-                  if (book.userId != req.auth.userId) {
-                      res.status(401).json({ message : 'Not authorized'});
-                  } else {
+exports.modifyBook = async (req, res, next) => {
+  const bookObject = req.file ? {
+    ...JSON.parse(req.body.book),
+    imageUrl: `${req.protocol}://${req.get("host")}/images/${req.file.filename}`
+  } : { ...req.body };
 
-                    const filename = book.imageUrl.split('/images/')[1];
-                      fs.unlink(`images/${filename}`, () => {  
-                               
-                      })
-                      book.imageUrl = imageUrl;
-                      book.title = title;
-                      book.author = author;
-                      book.year = year;
-                      book.genre = genre;
-
-                      book.updateOne({ _id: req.params.id }, { ...Book, _id: req.params.id })   //...Book ca va boucler tous les champs du tableau
-                     .then(() => { res.status(200).json({message: 'Objet remplacé !'})})
-                     .catch(error => {console.log( { error }) });
-                    // .catch(error => res.status(401).json({ error })); 
-                  };
-              }
-              catch(error) {
-                //  res.status(400).json({ error });
-                   console.log( { error });
-              };
-    
-  };
+  Book.findOne({ _id: req.params.id })
+    .then(book => {
+        if (book.userId !== req.auth.userId) {
+            res.status(401).json({ message: "Non autorisé à modifier ce livre." });
+        } else {
+            Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                .then(() => res.status(201).json({ message: "Le livre a été modifié avec succès !" }))
+                .catch(error => res.status(400).json({ error }));
+        }
+    })
+};
 
 
   exports.deleteBook = async (req, res, next ) => {
@@ -146,7 +128,8 @@ exports.createBook = (req, res, next) => {
                       fs.unlink(`images/${filename}`, () => {            // supprimer le livre de la base de donnée
                 book.deleteOne()
                   .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
-                  .catch(error => res.status(401).json({ error }));
+                  // .catch(error => res.status(401).json({ error }));
+                  .catch(error => {console.log( { error }) })
                       })
             }
         }
@@ -154,4 +137,3 @@ exports.createBook = (req, res, next) => {
             res.status(400).json({ error });
         };
  }
-

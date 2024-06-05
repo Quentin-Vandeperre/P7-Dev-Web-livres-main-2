@@ -7,7 +7,9 @@ const userRoutes = require('./routes/user');
 const app = express();
 const path = require('path');
 
-mongoose.connect('mongodb+srv://Bestellar:Bestellar@cluster0.5sy2wdr.mongodb.net/?retryWrites=true&w=majority',
+require('dotenv').config();
+
+mongoose.connect(process.env.DB_URL,
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
