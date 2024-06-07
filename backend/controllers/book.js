@@ -4,8 +4,7 @@ const fs = require('fs');
 exports.getAllBooks = async (req, res, next) => {
   try {
     const books = await Book.find();
-    
-      res.status(200).json(books);
+    res.status(200).json(books);
     
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -16,8 +15,7 @@ exports.getThreeBooks = async (req, res, next) => {
   try {
 
     const topBooks = await Book.find().sort({ averageRating: -1 }).limit(3);
-    
-      res.status(200).json(topBooks);
+    res.status(200).json(topBooks);
 
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -40,6 +40,8 @@ module.exports.resizeImage = (req, res, next) => {
 
   sharp(filePath)
     .resize({ width: 206, height: 260 })
+    .jpeg({ quality: 50 })
+    .png({ quality: 50 })
     .toFile(outputFilePath)
     .then(() => {
       // Remplacer le fichier original par le fichier redimensionné
