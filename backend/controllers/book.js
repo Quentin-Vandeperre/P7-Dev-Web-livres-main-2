@@ -5,11 +5,8 @@ exports.getAllBooks = async (req, res, next) => {
   try {
     const books = await Book.find();
     
-    if (books.length > 0) {
       res.status(200).json(books);
-    } else {
-      res.status(200).json({ message: 'No books available' });
-    }
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -20,11 +17,8 @@ exports.getThreeBooks = async (req, res, next) => {
 
     const topBooks = await Book.find().sort({ averageRating: -1 }).limit(3);
     
-    if (topBooks.length > 0) {
       res.status(200).json(topBooks);
-    } else {
-      res.status(200).json({ message: 'No books available' });
-    }
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
