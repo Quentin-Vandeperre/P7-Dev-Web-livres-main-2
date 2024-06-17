@@ -25,7 +25,7 @@ exports.getThreeBooks = async (req, res, next) => {
 exports.getOneBook = (req, res, next) => {
   Book.findOne({ _id: req.params.id })
     .then(book => res.status(200).json(book))
-    .catch(error => res.status(404).json({ error }));
+    .catch(error => res.status(500).json({ error }));
 };
 
 exports.rateBook = async (req, res, next) => {
@@ -35,7 +35,7 @@ exports.rateBook = async (req, res, next) => {
   Book.findById(id)
   .then(book => {
       if (!book) {
-          return res.status(404).json({ error: 'Book not found' });
+          return res.status(404).json({ error: 'Livre non trouvé' });
       }
       // On vérifie si l'utilisater a déjà mis une note
       for (let i = 0; i < book.ratings.length; i++) {
@@ -63,9 +63,9 @@ exports.rateBook = async (req, res, next) => {
       res.status(201).json(book)
       }
   })
-  .catch(error => res.status(400).json({ error }))
+  .catch(error => res.status(500).json({ error }))
   })
-  .catch(error => res.status(400).json({ message:'il y a eu une erreur' }));
+  .catch(error => res.status(500).json({ error}));
 };
 
 exports.createBook = (req, res, next) => {
@@ -85,9 +85,8 @@ exports.createBook = (req, res, next) => {
   });
     // Enregistrement dans la base de données
     book.save()
-    
         .then(() => { res.status(201).json({ message: 'Objet enregistré !' }) })
-        .catch(error => { res.status(400).json( { error }) })
+        .catch(error => { res.status(500).json( { error }) })
         // .catch(error => {console.log( { error }) })
 };
 
@@ -104,28 +103,33 @@ exports.modifyBook = async (req, res, next) => {
         } else {
             Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
                 .then(() => res.status(201).json({ message: "Le livre a été modifié avec succès !" }))
-                .catch(error => res.status(400).json({ error }));
+                .catch(error => res.status(500).json({ error }));
         }
     })
+    const book = await Book.findOne({_id: req.params.id});
+    if (req.body.book != book.imageUrl) {
+      const filename = book.imageUrl.split('/images/')[1];
+      fs.unlink(`images/${filename}`, () => {
+      })
+    }
 };
-
 
   exports.deleteBook = async (req, res, next ) => {
     try {
       const book = await Book.findOne({_id: req.params.id});
             if (book.userId != req.auth.userId) {
-                res.status(403).json({ message : 'Not authorized'});
+                res.status(403).json({ message : 'Non autorisé'});
             } else {
               const filename = book.imageUrl.split('/images/')[1];       
                       fs.unlink(`images/${filename}`, () => {            // supprimer le livre de la base de donnée
                 book.deleteOne()
                   .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
-                  // .catch(error => res.status(401).json({ error }));
-                  .catch(error => {console.log( { error }) })
+                  .catch(error => res.status(500).json({ error }));
+                  // .catch(error => {console.log( { error }) })
                       })
             }
         }
         catch(error) {
-            res.status(400).json({ error });
+            res.status(500).json({ error });
         };
  }
