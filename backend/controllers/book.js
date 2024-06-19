@@ -13,7 +13,6 @@ exports.getAllBooks = async (req, res, next) => {
 
 exports.getThreeBooks = async (req, res, next) => {
   try {
-
     const topBooks = await Book.find().sort({ averageRating: -1 }).limit(3);
     res.status(200).json(topBooks);
 
@@ -23,9 +22,11 @@ exports.getThreeBooks = async (req, res, next) => {
 };
 
 exports.getOneBook = (req, res, next) => {
-  Book.findOne({ _id: req.params.id })
-    .then(book => res.status(200).json(book))
-    .catch(error => res.status(500).json({ error }));
+  Book.findById(req.params.id)
+    .then((book) => {
+      res.status(200).json(book); 
+    })
+    .catch((error) => res.status(404).json({ error }));
 };
 
 exports.rateBook = async (req, res, next) => {
@@ -120,8 +121,9 @@ exports.modifyBook = async (req, res, next) => {
             if (book.userId != req.auth.userId) {
                 res.status(403).json({ message : 'Non autorisé'});
             } else {
-              const filename = book.imageUrl.split('/images/')[1];       
-                      fs.unlink(`images/${filename}`, () => {            // supprimer le livre de la base de donnée
+              const filename = book.imageUrl.split('/images/')[1];
+              // supprimer le livre de la base de donnée       
+                      fs.unlink(`images/${filename}`, () => {            
                 book.deleteOne()
                   .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
                   .catch(error => res.status(500).json({ error }));
