@@ -22,11 +22,16 @@ exports.getThreeBooks = async (req, res, next) => {
 };
 
 exports.getOneBook = (req, res, next) => {
+  try {
   Book.findById(req.params.id)
     .then((book) => {
       res.status(200).json(book); 
     })
     .catch((error) => res.status(404).json({ error }));
+}
+ catch (error) {
+  res.status(500).json({ error: error.message });
+}
 };
 
 exports.rateBook = async (req, res, next) => {
